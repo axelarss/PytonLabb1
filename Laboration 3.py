@@ -1,13 +1,15 @@
 import typed_input
 
+"""Här importerar vi en fil som heter "typed_input" vars funktionere vi kan nyttja senare"""
+
 def aritmetisk_summa(a_1, d, n):
     return (n * (2 * a_1 + (n - 1) * d)) // 2
 
-def geometrisk_summa(a_1, r, n):
+def geometrisk_summa(g_1, r, n):
     if r == 1:
-        return a_1 * n
+        return g_1 * n
     else:
-        return a_1 * (1 - r**n) // (1 - r)
+        return g_1 * (1 - r**n) // (1 - r)
 
 def main():
     a1 = typed_input.input_float("Skriv in värdet på a1: ")
@@ -28,10 +30,12 @@ def main():
     geometrisk = geometrisk_summa(g1, q, n)
 
     if geometrisk < aritmetisk:
-        print(f"Din aritmetiska summa är större än din geometriska summa")
+        print("Din aritmetiska summa är större än din geometriska summa")
     elif geometrisk == aritmetisk:
-        print(f"Din aritmetiska och geometriska summa är lika stora")
+        print("Din aritmetiska och geometriska summa är lika stora")
     else:
         print("Din geometriska summa är större än din aritmetiska summa")
+
+""" "Main()" funktionen hanterar och kontrollerar användarens inputs och bestämmer med hjälp av def1 och def2 vilket alternativ som är korrekt i sista if delen"""
 
 main()
