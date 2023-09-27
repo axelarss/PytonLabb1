@@ -1,4 +1,3 @@
-""" "float_input" felhanterar användarens input"""
 
 def float_input(prompt):
     while True:
@@ -8,15 +7,26 @@ def float_input(prompt):
         except ValueError:
             print("Felaktig inmatning, ange ett reellt tal.")
 
-""" "int_input" felhanterar användarens input. Eftersom "int" funktionen har ett cap-value så sätts ett if vilkor. "int"s cap-value hämtades från https://learn.microsoft.com/en-us/cpp/cpp/integer-limits?view=msvc-170"""
+def kvot_input(prompt):
+    while True:
+        try:
+            value = float(input(prompt))
+            if value != 1:
+                return value
+            else:
+                print("Kvot värdet får inte vara 1: ")
+        except ValueError:
+            print("Felaktig inmatning, ange ett reellt tal.")
 
 def int_input(prompt):
     while True:
         try:
             value = int(input(prompt))
-            if value <= 2147483647:
+            if value > 0:
                 return value
             else:
-                print("Värdet var för stort! Ange ett värde under 2147483648") 
+                print("Du måste använda ett positivt värde till antalet element: ")
         except ValueError:
             print("Felaktig inmatning, ange ett heltal.")
+
+
