@@ -1,0 +1,212 @@
+"""Bågskyttespelssimulering: Simulerar bågskyttesturneringar och poängsätter baserat på radieavstånd och håller reda på deltagarstatistik."""
+import random
+
+class Deltagare:
+    def __init__(self, namn, medelvärde, standardavvikelse, totala_vinster, totala_tävlingar):
+        """
+        Skapar en ny deltagare (deltagarobjekt) av paramterarna (namn, medelvärde, standardavvikelse, totala_vinster, totala_tävlingar)
+        """
+        self.namn = namn
+        self.medelvärde = medelvärde
+        self.standardavvikelse = standardavvikelse
+        self.totala_vinster = totala_vinster
+        self.totala_tävlingar = totala_tävlingar
+
+    def poäng(self, radie):
+        """
+        Beräknar poängen för skott utifrån givna x och y värden
+        """
+        if 0 <= radie <= 90:
+            return (110 - radie) // 20
+        else:
+            return 0
+
+    def skott(self):
+        """
+        Simulerar en serie av skott och beräknar totala poängen.
+        """
+        skott_resultat = []
+        for skott in range(10):  # "skott" är unused eftersom den inte används i for-blocket
+            x = random.normalvariate(self.medelvärde, self.standardavvikelse)  # Hämtat från https://www.csc.kth.se/~lk/P/random.txt
+            y = random.normalvariate(self.medelvärde, self.standardavvikelse)  # Hämtat från https://www.csc.kth.se/~lk/P/random.txt
+            radie = int((x ** 2 + y ** 2) ** 0.5)  # Hämtat från https://www.101computing.net/archery-challenge/
+            poäng = self.poäng(radie)
+            skott_resultat.append(poäng)
+
+        skott_resultat.sort(reverse=True)
+        totala_poäng = sum(skott_resultat) - skott_resultat[-2]
+        self.totala_tävlingar += 1
+        return totala_poäng, skott_resultat
+
+    def vinster(self):
+        """Ökar antalet vinster för deltagarna med 1."""
+        self.totala_vinster += 1
+
+    def hämta_info(self):
+        """
+        Returnerar information om deltävlandet i strängformat.
+        """
+        return f"{self.namn} ; {self.medelvärde} ; {self.standardavvikelse} ; {self.totala_tävlingar} ; {self.totala_vinster}"
+
+def öppna_fil():
+    """
+    Öppnar en fil med deltagare och läser in dem och returnerar dem i listan deltagare och vilken fil som öppnats.
+    """
+    deltagare = []
+    while True:
+        filnamn = input("Ange filnamnet för filen med deltagarna: ")
+        try:
+            with open(filnamn, "r", encoding="utf-8") as fil:
+                for rad in fil:
+                    part = rad.strip().split(";")
+                    try:
+                        namn = part[0]
+                        medelvärde = float(part[1])
+                        standardavvikelse = float(part[2])
+                        totala_tävlingar = int(part[3])
+                        totala_vinster = int(part[4])
+                        objekt = Deltagare(namn, medelvärde, standardavvikelse, totala_vinster, totala_tävlingar)
+                        deltagare.append(objekt)
+                    except ValueError:
+                        print(f"Ogiltig rad: {rad}. Ignoreras.")
+                    except IndexError:
+                        print(f"Ogiltig rad: {rad}. Ignoreras.") 
+            return filnamn, deltagare
+        except FileNotFoundError:
+            print(f"Filen '{filnamn}' hittades inte. Försök igen.")
+        except ValueError:
+            print("Ogiltiga värden i filen. Försök igen.")
+        except IndexError:
+            print("Ogiltig radstruktur i filen. Försök igen.")
+            nytt_filenamn = input("Ange ett annat filnamn eller tryck Enter för att avbryta: ")
+            if not nytt_filenamn:
+                break
+            filnamn = nytt_filenamn
+
+def hantera_deltagare(deltagare):
+    """
+    Lägger till en ny deltävlande och returnerar dem i slutet av listan deltagare
+    """
+    while True:
+        namn = input("Ange namn på deltagaren: ")
+        try:
+            medelvärde = float(input("Ge ett medelvärde deltagarens tidigare skottserier?: "))
+            standardavvikelse = float(input("Ge en standardavvikelse på spelarens skott?: "))
+            totala_vinster = int(input("Hur många tävlingar har deltagaren vunnit innan?: "))
+            totala_tävlingar = int(input("Hur många tävlingar har deltagaren varit med i innan?: "))
+            ny_deltagare = Deltagare(namn, medelvärde, standardavvikelse, totala_vinster, totala_tävlingar)
+            deltagare.append(ny_deltagare)
+            print(f"{ny_deltagare.namn} har lagts till som ny deltagare.")
+            break  # Avsluta loopen om en deltagare har lagts till korrekt
+        except ValueError:
+            print("Ogiltiga värden. Försök igen.")
+
+def tävling(deltagare, tävling_nr):
+    """
+    Simulerar en tävling och beräknar poängen för varje deltagarna och returnerar poängresultats dictionaryn för deltagarna.
+    """
+    print(f"Tävling nr {tävling_nr}:")
+    poängresultat = {}
+    for deltagare_objekt in deltagare:
+        totala_poäng, skott_resultat = deltagare_objekt.skott()
+        skott_str = ' '.join(str(skott) for skott in skott_resultat)  # Hämtat från https://stackoverflow.com/questions/63084270/how-does-the-join-function-work-with-a-for-loop
+        poängresultat[deltagare_objekt] = totala_poäng
+        print(f"{deltagare_objekt.namn}: {skott_str} resultat = {totala_poäng}")
+    return poängresultat
+
+def printa_vinnare(poängresultat, tävling_nr):
+    """
+    Använder poängresultatet för att hitta vinnarna och returnerar dem i en lista
+    """
+    max_poäng = max(poängresultat.values())
+
+    vinnare = []
+    nya_vinnare = []
+
+    for objekt, poäng in poängresultat.items():
+        if poäng == max_poäng:
+            vinnare.append(objekt)
+
+    if len(vinnare) == 1:
+        vinnare[0].vinster()
+        print(f"{vinnare[0].namn} vann tävling nr {tävling_nr}.")
+    else:
+        print(f"{' '.join([vinnare_objekt.namn for vinnare_objekt in vinnare])} hade samma {max_poäng} poäng (bäst i tävlingen).")  # Hämtat från https://stackoverflow.com/questions/63084270/how-does-the-join-function-work-with-a-for-loop
+        print("De skjuter om:")
+        
+        for vinnare_objekt in vinnare:
+            totala_poäng, skott_resultat = vinnare_objekt.skott()
+            nya_vinnare.append(vinnare_objekt)
+            skott_str = ' '.join(str(skott) for skott in skott_resultat)  # Hämtat från https://stackoverflow.com/questions/63084270/how-does-the-join-function-work-with-a-for-loop
+            print(f"{vinnare_objekt.namn}: {skott_str} resultat = {totala_poäng}")
+        
+        ny_max_poäng = max(poängresultat[vinnare_objekt] for vinnare_objekt in nya_vinnare)
+
+        for objekt, poäng in poängresultat.items():
+            if poäng == ny_max_poäng:
+                nya_vinnare.append(objekt)
+
+        if len(nya_vinnare) == 1:
+            nya_vinnare[0].vinster()
+            print(f"{nya_vinnare[0].namn} vann omgången och tävling nr {tävling_nr}.")
+        else:
+            print(f"Ingen klar vinnare i omgången. De hade samma {ny_max_poäng} poäng.")
+    
+    return nya_vinnare
+
+def spara_deltagarinfo(deltagare, filnamn):
+    """
+    Sparar information om deltagarna i en fil.
+    """
+    with open(filnamn, "w", encoding="utf-8") as fil:
+        for objekt in deltagare:
+            fil.write(objekt.hämta_info() + "\n")
+
+def printa_statistik(deltagare):
+    """
+    Tar deltagarna vinster och matcher presenterar den statistiken över deltagarna.
+    """
+    print("Statistik:")
+    for objekt in deltagare:
+        namn = objekt.namn
+        vinster = objekt.totala_vinster
+        matcher = objekt.totala_tävlingar
+        print(f"{namn} - Vinster: {vinster}, Matcher: {matcher}")
+
+def main():
+    """
+    Huvudfunktionen som kör alla funktioner och klasser och returnerar det tänkta programmet.
+    """
+    filnamn, deltagare = öppna_fil()
+
+    while True:
+        svar = input("Vill du lägga till en ny deltagare? (ja/nej): ")
+        if svar == "ja":
+            hantera_deltagare(deltagare)
+        elif svar == "nej":
+            break
+        else:
+            print("Ogiltigt svar. Skriv nej för att avsluta och ja för att fortsätta lägga till en ny deltagare")
+
+    while True:
+        try:
+            säsongslängd = int(input("Ange antal tävlingar under säsongen: "))
+            break
+        except ValueError:
+            print("Ogiltigt antal tävlingar. Försök att ange ett heltal")
+
+    for säsong in range(1, säsongslängd + 1, 2):
+        for tävling_nr in range(säsong, min(säsong + 2, säsongslängd + 1)):
+            poängresultat = tävling(deltagare, tävling_nr)
+            vinnare = printa_vinnare(poängresultat, tävling_nr)  # "vinnare" är unused eftersom den inte används senare i koden
+            spara_deltagarinfo(deltagare, filnamn)
+            print("============================================================")
+
+        if säsong + 2 <= säsongslängd:
+            input("Tryck Enter för att fortsätta till nästa säsong")
+
+    printa_statistik(deltagare)
+
+# Kör main funktionen om denna körs
+if __name__ == "__main__":
+    main()
